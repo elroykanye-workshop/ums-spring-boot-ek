@@ -2,6 +2,7 @@ package com.elroykanye.userregsystem.rest;
 
 import com.elroykanye.userregsystem.dto.UserDTO;
 import com.elroykanye.userregsystem.repo.UserJpaRep;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import com.elroykane.usermanangement.exception.*;
+
 
 @RestController
 @RequestMapping("/api/user")
@@ -38,31 +41,60 @@ public class UserRegRestController {
 
     @GetMapping("/{user_id}")
     public ResponseEntity<Optional<UserDTO>> getUserById(@PathVariable("user_id") final Long id) {
-        Optional<UserDTO> user = userJpaRep.findById(id);
-        return new ResponseEntity<>(user, HttpStatus.OK);
+        if(userJpaRep.findById(id).isPresent())
+        {
+        	Optional<UserDTO> user = userJpaRep.findById(id);
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        }
+        else
+        {
+        	logger.error("No user found for id : "+id);
+        	throw new NoUserFoundException("No User for ID: "+id);
+        }
+        
+        
     }
+    
+    
+    
 
     @PutMapping(value = "/{user_id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Optional<UserDTO>> updateUser(@PathVariable("user_id") final Long id, @RequestBody UserDTO user) {
-        // fetch a user based on id and set it to currentUser object of type DTO
-        Optional<UserDTO> currUser = userJpaRep.findById(id);
-
-        // update currUser object data with user object data
-        currUser.get().setName(user.getName());
-        currUser.get().setAddress(user.getAddress());
-        currUser.get().setEmail(user.getEmail());
-
-        // save the current user object
-        userJpaRep.saveAndFlush(currUser.get());
-
-        // return a response entity object
-        return new ResponseEntity<>(currUser, HttpStatus.OK);
+    	if(userJpaRep.findById(id).isPresent())
+    	{
+	    	// fetch a user based on id and set it to currentUser object of type DTO
+	        Optional<UserDTO> currUser = userJpaRep.findById(id);
+	
+	        // update currUser object data with user object data
+	        currUser.get().setName(user.getName());
+	        currUser.get().setAddress(user.getAddress());
+	        currUser.get().setEmail(user.getEmail());
+	
+	        // save the current user object
+	        userJpaRep.saveAndFlush(currUser.get());
+	
+	        // return a response entity object
+	        return new ResponseEntity<>(currUser, HttpStatus.OK);
+    	}
+    	else
+    	{
+    		logger.error("No user found for id : "+id);
+    		throw new NoUserFoundException("No User for ID: "+id);
+    	}
     }
 
     @DeleteMapping("/{user_id}")
     public ResponseEntity<UserDTO> deleteUser(@PathVariable("user_id") final Long id) {
-        userJpaRep.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    	if(userJpaRep.findById(id).isPresent())
+    	{	
+	        userJpaRep.deleteById(id);
+	        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    	}
+    	else
+    	{
+    		logger.error("No user found for id : "+id);
+    		throw new NoUserFoundException("No User for ID: "+id);
+    	}
     }
 
 }
